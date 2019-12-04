@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>wasm wasm wasm</title>
+	</head>
+	<body >
+		Page loaded
+		<div id='log'></div>
+	<body>
+	<script>
+		"use strict";
+		fetch('matmul.wasm').then(response =>
+			response.arrayBuffer()
+		).then(bytes =>
+			WebAssembly.instantiate(bytes, {})
+		).then(results => {
+			const buffer =
+				new Uint32Array(results.instance.exports.memory.buffer);
+			
+			var msg = ''
+			for (var size = 20; size < 150; size += 20) {
+				for (var i = 0; i < 2*size*size; i++) {
+					buffer[i] = 1;
+				}
+				const start = Date.now();
+				results.instance.exports.matmul(size, size, size,
+					0, 4 * size * size, 8 * size * size);
+				msg += 'Time for ' + size + ' matrix: ' + (Date.now() - start) +'</br>';
+				for (var i = 0; i < size*size; ++i)
+					console.assert(buffer[2*size*size+i] == size);
+			}
+			document.getElementById('log').innerHTML = msg
+		});
+	</script>
+</html>
