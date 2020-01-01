@@ -10,27 +10,23 @@
 	<body>
 	<script>
 		"use strict";
-		fetch('matmul.wasm').then(response =>
+		fetch('smatmul.wasm').then(response =>
 			response.arrayBuffer()
 		).then(bytes =>
-			WebAssembly.instantiate(bytes, {})
+			WebAssembly.instantiate(bytes, {env: {
+				now: Date.now,
+				alert: alert
+			}})
 		).then(results => {
 			const buffer =
 				new Uint32Array(results.instance.exports.memory.buffer);
 			
 			var msg = ''
-			for (var size = 20; size < 150; size += 20) {
-				for (var i = 0; i < 2*size*size; i++) {
-					buffer[i] = 1;
-				}
-				const start = Date.now();
-				results.instance.exports.matmul(size, size, size,
-					0, 4 * size * size, 8 * size * size);
-				msg += 'Time for ' + size + ' matrix: ' + (Date.now() - start) +'</br>';
-				for (var i = 0; i < size*size; ++i)
-					console.assert(buffer[2*size*size+i] == size);
+			for (var size = 100; size <= 500; size += 100) {
+				const interval = results.instance.exports.matmul(size);
+				msg += size +', ' + interval +'</br>';
 			}
 			document.getElementById('log').innerHTML = msg
-		});
+		}).catch(error => alert(error.message));
 	</script>
 </html>
